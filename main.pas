@@ -4,19 +4,48 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, ComCtrls, Menus, StdCtrls, CheckLst, XPMan, Math;
+  Dialogs, ExtCtrls, ComCtrls, Menus, StdCtrls, CheckLst, XPMan, Math,
+  Buttons;
 
 const num_tiles = 800;
 const tileset_max_height = 40;
-
 const num_tileatr_values = 7;
-const tileatr_values: array[0..num_tileatr_values-1] of cardinal = ($2000, $4000, $8000, $10000, $20000000, $40000000, $80000000);
-const tileatr_combined_colors: array[0..num_tileatr_values-1] of cardinal = ($80, $3000, $C000, $60, $2020, $C00000, $204000);
-const tileatr_attribute_colors: array[0..num_tileatr_values-1] of cardinal = ($FF, $FF0000, $FF00, $FF00FF, $FFFF, $FFFF00, $808080);
 
 const num_tilesets = 7;
 const tileset_filenames: array[1..num_tilesets] of String = ('BLOXBASE','BLOXBAT','BLOXBGBS','BLOXICE','BLOXTREE','BLOXWAST','BLOXXMAS');
 const tileatr_filenames: array[1..num_tilesets] of String = ('tileatr2.bin','tileatr6.bin','tileatr3.bin','tileatr5.bin','tileatr1.bin','tileatr4.bin','tileatr7.bin');
+
+type
+  TTileAttribute = record
+    name: string;
+    value: cardinal;
+    combined_color: cardinal;
+    attribute_color: cardinal;
+  end;
+
+const atr: array[0..1, 0..num_tileatr_values-1] of TTileAttribute =
+  (
+    (
+      (name: 'Vehicles can pass';       value: $2000;     combined_color: $000080; attribute_color: $0000FF),
+      (name: 'Infantry can pass';       value: $4000;     combined_color: $003000; attribute_color: $FF0000),
+      (name: 'Buildings can be placed'; value: $8000;     combined_color: $00C000; attribute_color: $00FF00),
+      (name: 'Sandworm can pass';       value: $10000;    combined_color: $000060; attribute_color: $FF00FF),
+      (name: 'Unknown';                 value: $20000000; combined_color: $002020; attribute_color: $00FFFF),
+      (name: 'Slow movement';           value: $40000000; combined_color: $C00000; attribute_color: $FFFF00),
+      (name: 'Unknown';                 value: $80000000; combined_color: $204000; attribute_color: $808080)
+    ),
+    (
+      (name: 'Clear Sand';              value: $01;       combined_color: $0000E0; attribute_color: $0000FF),
+      (name: 'Clear Rock';              value: $02;       combined_color: $00C000; attribute_color: $00FF00),
+      (name: 'Clear Dunes';             value: $04;       combined_color: $C00000; attribute_color: $FF0000),
+      (name: 'Dunes area';              value: $08;       combined_color: $7F0000; attribute_color: $FF00FF),
+      (name: 'Rock area';               value: $10;       combined_color: $007F00; attribute_color: $00FFFF),
+      (name: 'Sand decorations';        value: $20;       combined_color: $00009F; attribute_color: $FFFF00),
+      (name: 'Ice Area';                value: $40;       combined_color: $C000C0; attribute_color: $808080)
+    )
+  );
+
+const atrvalueset: array[0..1] of cardinal = ($FFFFFF00, $000000FF);
 
 type
    MarkSelection = (msAll, msExact, msFilterHaving, msFilterNotHaving, msInfantryOnly);
@@ -65,6 +94,9 @@ type
     SaveTileAtras1: TMenuItem;
     SaveTileAtrDialog: TSaveDialog;
     rgMarkType: TRadioGroup;
+    rbGameAttributes: TRadioButton;
+    rbEditorAttributes: TRadioButton;
+    btnImportEditorAttributes: TButton;
     // Form actions
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -92,10 +124,14 @@ type
     procedure TilesetScrollBarChange(Sender: TObject);
     procedure TileAtrListClickCheck(Sender: TObject);
     procedure btnTileAtrValueApplyClick(Sender: TObject);
+    procedure selectAttributeSet(Sender: TObject);
+    procedure btnImportEditorAttributesClick(Sender: TObject);
 
   private
     { Private declarations }
     current_dir: String;
+
+    atrset: integer;
 
     tileset_bitmap: TBitmap;
     tileset_loaded: boolean;
@@ -108,6 +144,9 @@ type
 
     active_tile: integer;
 
+    mouse_old_x: integer;
+    mouse_old_y: integer;
+
     select_started: boolean;
     select_start_x: integer;
     select_start_y: integer;
@@ -118,6 +157,7 @@ type
     procedure open_tileatr(filename: string);
     procedure save_tileatr(filename: string);
     procedure render_tileset;
+    procedure init_attribute_names;
     procedure set_tile_attribute_list(value: cardinal);
     procedure set_tile_attributes(tile_index: integer);
   public
@@ -136,6 +176,8 @@ begin
   current_dir := ExtractFilePath(Application.ExeName);
   tileset_bitmap := TBitmap.Create;
   TilesetImage.Picture.Bitmap.Width := 640;
+  atrset := 0;
+  init_attribute_names;
 end;
 
 procedure TMainWindow.FormResize(Sender: TObject);
@@ -242,7 +284,7 @@ end;
 
 procedure TMainWindow.About1Click(Sender: TObject);
 begin
-  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2K+ Editing tools'#13#13'Made by Klofkac'#13'Version 0.1'#13'Date: 2015-05-06'#13#13'http://github.com/jkoncick/TileAtrEditor');
+  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2k+ Editing tools'#13#13'Made by Klofkac'#13'Version 0.1'#13'Date: 2015-05-07'#13#13'http://github.com/jkoncick/TileAtrEditor');
 end;
 
 procedure TMainWindow.TilesetImageMouseDown(Sender: TObject;
@@ -287,7 +329,13 @@ var
 begin
   pos_x := X div 32;
   pos_y := Y div 32 + tileset_top;
+  if (mouse_old_x = pos_x) and (mouse_old_y = pos_y) then
+    exit;
+  mouse_old_x := pos_x;
+  mouse_old_y := pos_y;
   StatusBar.Panels[0].Text := 'x : ' + inttostr(pos_x) + ' y : ' + inttostr(pos_y);
+  if (not select_started) and (ssLeft in Shift) then
+    TilesetImageMouseDown(Sender, mbLeft, Shift, X, Y);
   if select_started and ((pos_x <> select_end_x) or (pos_y <> select_end_y)) then
   begin
     select_end_x := pos_x;
@@ -331,7 +379,7 @@ begin
   for i := 0 to num_tileatr_values - 1 do
   begin
     if TileAtrList.Checked[i] then
-      value := value or tileatr_values[i];
+      value := value or atr[atrset,i].value;
     TileAtrValue.Text := IntToHex(value, 8);
   end;
   active_tile := -1;
@@ -342,6 +390,39 @@ procedure TMainWindow.btnTileAtrValueApplyClick(Sender: TObject);
 begin
   set_tile_attribute_list(strtoint('$'+TileAtrValue.Text));
   render_tileset;
+end;
+
+procedure TMainWindow.selectAttributeSet(Sender: TObject);
+var
+  num: integer;
+begin
+  num := (Sender as TRadioButton).Tag;
+  if atrset <> num then
+  begin
+    atrset := num;
+    btnImportEditorAttributes.Visible := num = 1;
+    init_attribute_names;
+    set_tile_attribute_list(strtoint('$'+TileAtrValue.Text));
+    render_tileset;
+  end;
+end;
+
+procedure TMainWindow.btnImportEditorAttributesClick(Sender: TObject);
+var
+  tileatr_file: file of cardinal;
+  tmp_tileatr_data: array[0..num_tiles-1] of cardinal;
+  i: integer;
+begin
+  if OpenTileatrDialog.Execute then
+  begin
+    AssignFile(tileatr_file, OpenTileatrDialog.FileName);
+    Reset(tileatr_file);
+    BlockRead(tileatr_file, tmp_tileatr_data, num_tiles);
+    CloseFile(tileatr_file);
+    for i := 0 to num_tiles - 1 do
+      tileatr_data[i] := (tileatr_data[i] and $FFFFFF00) or (tmp_tileatr_data[i] and $FF);
+    render_tileset;
+  end;
 end;
 
 procedure TMainWindow.open_tileset(filename: string);
@@ -394,7 +475,7 @@ var
   min_x, min_y, max_x, max_y: integer;
 begin
   top_pixels := tileset_top * 32;
-  selected_value := strtoint('$'+TileAtrValue.Text);
+  selected_value := strtoint('$'+TileAtrValue.Text) and atrvalueset[atrset];
   if tileset_loaded then
     TilesetImage.Canvas.CopyRect(Rect(0,0,640,tileset_height*32), tileset_bitmap.Canvas, Rect(0,top_pixels,640,top_pixels+tileset_height*32));
   if tileatr_loaded then
@@ -407,7 +488,7 @@ begin
       for x := 0 to 19 do
       begin
         tile_index := x + (y + tileset_top) * 20;
-        tile_value := tileatr_data[tile_index];
+        tile_value := tileatr_data[tile_index] and atrvalueset[atrset];
         mark_tile := false;
         case mark_selection of
           msAll:              mark_tile := true;
@@ -422,8 +503,8 @@ begin
           begin
             color := $0;
             for i := 0 to num_tileatr_values - 1 do
-              if (tileatr_data[tile_index] and tileatr_values[i]) <> 0 then
-                color := color or tileatr_combined_colors[i];
+              if (tileatr_data[tile_index] and atr[atrset,i].value) <> 0 then
+                color := color or atr[atrset,i].combined_color;
             TilesetImage.Canvas.Pen.Color := color;
             TilesetImage.Canvas.Rectangle(x*32+2, y*32+2, x*32+31, y*32+31);
           end
@@ -432,10 +513,10 @@ begin
             TilesetImage.Canvas.Brush.Style := bsSolid;
             TilesetImage.Canvas.Pen.Width := 1;
             for i := 0 to num_tileatr_values - 1 do
-              if (tileatr_data[tile_index] and tileatr_values[i]) <> 0 then
+              if (tileatr_data[tile_index] and atr[atrset,i].value) <> 0 then
               begin
-                TilesetImage.Canvas.Pen.Color := tileatr_attribute_colors[i];
-                TilesetImage.Canvas.Brush.Color := tileatr_attribute_colors[i];
+                TilesetImage.Canvas.Pen.Color := atr[atrset,i].attribute_color;
+                TilesetImage.Canvas.Brush.Color := atr[atrset,i].attribute_color;
                 TilesetImage.Canvas.Rectangle(x*32+2+i*4, y*32+26, x*32+6+i*4, y*32+30);
               end;
           end;
@@ -462,13 +543,22 @@ begin
   end;
 end;
 
+procedure TMainWindow.init_attribute_names;
+var
+  i: integer;
+begin
+  TileAtrList.Items.Clear;
+  for i := 0 to num_tileatr_values - 1 do
+     TileAtrList.Items.add(atr[atrset,i].name)
+end;
+
 procedure TMainWindow.set_tile_attribute_list(value: cardinal);
 var
   i: integer;
 begin
   for i := 0 to num_tileatr_values - 1 do
   begin
-    if (value and tileatr_values[i]) <> 0 then
+    if (value and atr[atrset,i].value) <> 0 then
       TileAtrList.Checked[i] := true
     else
       TileAtrList.Checked[i] := false;
@@ -483,7 +573,7 @@ begin
   selected_value := strtoint('$'+TileAtrValue.Text);
   operation := SetOperation(rgOperation.ItemIndex);
   case operation of
-    opSet:    tileatr_data[tile_index] := selected_value;
+    opSet:    tileatr_data[tile_index] := (tileatr_data[tile_index] and (not atrvalueset[atrset])) or (selected_value and atrvalueset[atrset]);
     opAdd:    tileatr_data[tile_index] := tileatr_data[tile_index] or selected_value;
     opRemove: tileatr_data[tile_index] := tileatr_data[tile_index] and (not selected_value);
     end;

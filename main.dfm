@@ -81,7 +81,7 @@ object MainWindow: TMainWindow
   end
   object TileAtrList: TCheckListBox
     Left = 680
-    Top = 56
+    Top = 68
     Width = 201
     Height = 129
     OnClickCheck = TileAtrListClickCheck
@@ -92,14 +92,6 @@ object MainWindow: TMainWindow
     Font.Name = 'MS Sans Serif'
     Font.Style = []
     ItemHeight = 17
-    Items.Strings = (
-      'Vehicles can pass'
-      'Infantry can pass'
-      'Buildings can be placed'
-      'Sandworm can pass'
-      'Unknown'
-      'Slow movement'
-      'Unknown')
     ParentFont = False
     Style = lbOwnerDrawFixed
     TabOrder = 3
@@ -115,7 +107,7 @@ object MainWindow: TMainWindow
   end
   object rgMarkSelection: TRadioGroup
     Left = 680
-    Top = 192
+    Top = 328
     Width = 201
     Height = 121
     Caption = ' Tile-marking selection '
@@ -131,7 +123,7 @@ object MainWindow: TMainWindow
   end
   object rgOperation: TRadioGroup
     Left = 680
-    Top = 393
+    Top = 233
     Width = 201
     Height = 80
     Caption = ' Operation '
@@ -144,15 +136,15 @@ object MainWindow: TMainWindow
   end
   object cbMultipleTileMode: TCheckBox
     Left = 688
-    Top = 480
-    Width = 185
+    Top = 206
+    Width = 137
     Height = 17
     Caption = 'Multiple-tile-select mode'
     TabOrder = 7
   end
   object rgMarkType: TRadioGroup
     Left = 680
-    Top = 323
+    Top = 461
     Width = 201
     Height = 60
     Caption = ' Tile-marking style '
@@ -162,6 +154,48 @@ object MainWindow: TMainWindow
       'Mark all attributes separately')
     TabOrder = 8
     OnClick = btnTileAtrValueApplyClick
+  end
+  object rbGameAttributes: TRadioButton
+    Left = 684
+    Top = 40
+    Width = 97
+    Height = 17
+    Hint = 'Standard attributes actually used by game.'
+    Caption = 'Game attributes'
+    Checked = True
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 9
+    TabStop = True
+    OnClick = selectAttributeSet
+  end
+  object rbEditorAttributes: TRadioButton
+    Tag = 1
+    Left = 788
+    Top = 40
+    Width = 97
+    Height = 17
+    Hint = 
+      'Attributes used only by Campaign Map Editor.'#13'You should not set ' +
+      'them in TileAtr files used by game!'
+    Caption = 'Editor attributes'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 10
+    OnClick = selectAttributeSet
+  end
+  object btnImportEditorAttributes: TButton
+    Left = 836
+    Top = 204
+    Width = 45
+    Height = 21
+    Hint = 'Import Editor attributes from different TileAtr file'
+    Caption = 'Import'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 11
+    Visible = False
+    OnClick = btnImportEditorAttributesClick
   end
   object MainMenu: TMainMenu
     object File1: TMenuItem
