@@ -9,7 +9,7 @@ uses
 begin
   Application.Initialize;
   Application.HelpFile := 'Dune 2000 Tileset Attributes Editor';
-  Application.Title := 'D2k+ TileAtr Editor';
+  Application.Title := 'D2K+ TileAtr Editor';
   Application.CreateForm(TMainWindow, MainWindow);
   Application.Run;
 end.

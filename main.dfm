@@ -45,7 +45,7 @@ object MainWindow: TMainWindow
     Panels = <
       item
         Text = 'X: 0  Y: 0'
-        Width = 70
+        Width = 100
       end
       item
         Text = 'No Tileset loaded'
@@ -56,8 +56,8 @@ object MainWindow: TMainWindow
         Width = 360
       end
       item
-        Text = 'alpha 0.1'
-        Width = 50
+        Text = 'v1.0'
+        Width = 20
       end>
   end
   object TilesetScrollBar: TScrollBar
@@ -82,7 +82,7 @@ object MainWindow: TMainWindow
   object TileAtrList: TCheckListBox
     Left = 680
     Top = 68
-    Width = 201
+    Width = 204
     Height = 129
     OnClickCheck = TileAtrListClickCheck
     Color = clWhite
@@ -239,36 +239,43 @@ object MainWindow: TMainWindow
       object BLOXBASE1: TMenuItem
         Tag = 1
         Caption = 'BLOXBASE'
+        ShortCut = 112
         OnClick = QuickOpenClick
       end
       object BLOXBAT1: TMenuItem
         Tag = 2
         Caption = 'BLOXBAT'
+        ShortCut = 113
         OnClick = QuickOpenClick
       end
       object BLOXBGBS1: TMenuItem
         Tag = 3
         Caption = 'BLOXBGBS'
+        ShortCut = 114
         OnClick = QuickOpenClick
       end
       object BLOXICE1: TMenuItem
         Tag = 4
         Caption = 'BLOXICE'
+        ShortCut = 115
         OnClick = QuickOpenClick
       end
       object BLOXTREE1: TMenuItem
         Tag = 5
         Caption = 'BLOXTREE'
+        ShortCut = 116
         OnClick = QuickOpenClick
       end
       object BLOXWAST1: TMenuItem
         Tag = 6
         Caption = 'BLOXWAST'
+        ShortCut = 117
         OnClick = QuickOpenClick
       end
       object BLOXXMAS1: TMenuItem
         Tag = 7
         Caption = 'BLOXXMAS'
+        ShortCut = 118
         OnClick = QuickOpenClick
       end
     end

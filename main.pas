@@ -26,22 +26,22 @@ type
 const atr: array[0..1, 0..num_tileatr_values-1] of TTileAttribute =
   (
     (
-      (name: 'Vehicles can pass';       value: $2000;     combined_color: $000080; attribute_color: $0000FF),
-      (name: 'Infantry can pass';       value: $4000;     combined_color: $003000; attribute_color: $FF0000),
-      (name: 'Buildings can be placed'; value: $8000;     combined_color: $00C000; attribute_color: $00FF00),
-      (name: 'Sandworm can pass';       value: $10000;    combined_color: $000060; attribute_color: $FF00FF),
-      (name: 'Unknown';                 value: $20000000; combined_color: $002020; attribute_color: $00FFFF),
-      (name: 'Slow movement';           value: $40000000; combined_color: $C00000; attribute_color: $FFFF00),
-      (name: 'Unknown';                 value: $80000000; combined_color: $204000; attribute_color: $808080)
+      (name: 'Vehicles can pass';                     value: $2000;     combined_color: $000080; attribute_color: $0000FF),
+      (name: 'Infantry can pass';                     value: $4000;     combined_color: $003000; attribute_color: $FF0000),
+      (name: 'Buildings can be placed, Rock craters'; value: $8000;     combined_color: $00C000; attribute_color: $00FF00),
+      (name: 'Sandworm can pass, Sand craters';       value: $10000;    combined_color: $000060; attribute_color: $FF00FF),
+      (name: 'Rock (wheeled +10% speed)';             value: $20000000; combined_color: $002020; attribute_color: $00FFFF),
+      (name: 'Dunes (wheeled -50%, other -20% sp.)';  value: $40000000; combined_color: $C00000; attribute_color: $FFFF00),
+      (name: 'Rough Rock (all -50% speed)';           value: $80000000; combined_color: $204000; attribute_color: $808080)
     ),
     (
-      (name: 'Clear Sand';              value: $01;       combined_color: $0000E0; attribute_color: $0000FF),
-      (name: 'Clear Rock';              value: $02;       combined_color: $00C000; attribute_color: $00FF00),
-      (name: 'Clear Dunes';             value: $04;       combined_color: $C00000; attribute_color: $FF0000),
-      (name: 'Dunes area';              value: $08;       combined_color: $7F0000; attribute_color: $FF00FF),
-      (name: 'Rock area';               value: $10;       combined_color: $007F00; attribute_color: $00FFFF),
-      (name: 'Sand decorations';        value: $20;       combined_color: $00009F; attribute_color: $FFFF00),
-      (name: 'Ice Area';                value: $40;       combined_color: $C000C0; attribute_color: $808080)
+      (name: 'Clean Sand';       value: $01;       combined_color: $0000E0; attribute_color: $0000FF),
+      (name: 'Clean Rock';       value: $02;       combined_color: $00C000; attribute_color: $00FF00),
+      (name: 'Clean Dunes';      value: $04;       combined_color: $C00000; attribute_color: $FF0000),
+      (name: 'Dunes area';       value: $08;       combined_color: $7F0000; attribute_color: $FF00FF),
+      (name: 'Rock area';        value: $10;       combined_color: $007F00; attribute_color: $00FFFF),
+      (name: 'Sand decorations'; value: $20;       combined_color: $00009F; attribute_color: $FFFF00),
+      (name: 'Ice Area';         value: $40;       combined_color: $C000C0; attribute_color: $808080)
     )
   );
 
@@ -279,12 +279,12 @@ end;
 
 procedure TMainWindow.Howtouse1Click(Sender: TObject);
 begin
-  ShowMessage('Mouse actions:'#13#13'Left click = Set tileset attributes'#13'Right click = Get tileset attributes'#13'Middle click = Unmark selected tile'#13'Use "Multiple-tile-selection mode" and'#13'drag over all tiles you want to modify.');
+  ShowMessage('Mouse actions:'#13#13'Left click = Set tileset attributes'#13'Right click = Get tileset attributes'#13'Middle click = Unmark selected tile'#13'Use "Multiple-tile-select mode" and'#13'drag over all tiles you want to modify.');
 end;
 
 procedure TMainWindow.About1Click(Sender: TObject);
 begin
-  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2k+ Editing tools'#13#13'Made by Klofkac'#13'Version 0.1'#13'Date: 2015-05-07'#13#13'http://github.com/jkoncick/TileAtrEditor');
+  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2K+ Editing tools'#13#13'Made by Klofkac'#13'Version 1.0'#13'Date: 2015-07-27'#13#13'http://github.com/jkoncick/TileAtrEditor');
 end;
 
 procedure TMainWindow.TilesetImageMouseDown(Sender: TObject;
@@ -333,7 +333,7 @@ begin
     exit;
   mouse_old_x := pos_x;
   mouse_old_y := pos_y;
-  StatusBar.Panels[0].Text := 'x : ' + inttostr(pos_x) + ' y : ' + inttostr(pos_y);
+  StatusBar.Panels[0].Text := 'x : ' + inttostr(pos_x) + ' y : ' + inttostr(pos_y) + '  (' + inttostr(pos_y*20 + pos_x) + ')';
   if (not select_started) and (ssLeft in Shift) then
     TilesetImageMouseDown(Sender, mbLeft, Shift, X, Y);
   if select_started and ((pos_x <> select_end_x) or (pos_y <> select_end_y)) then
