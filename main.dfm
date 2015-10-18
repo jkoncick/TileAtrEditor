@@ -134,12 +134,12 @@ object MainWindow: TMainWindow
       'Remove selected attributes')
     TabOrder = 6
   end
-  object cbMultipleTileMode: TCheckBox
+  object cbMultipleSelectMode: TCheckBox
     Left = 688
     Top = 210
     Width = 137
     Height = 17
-    Caption = 'Multiple-tile-select mode'
+    Caption = 'Multiple-select mode'
     TabOrder = 7
   end
   object rgMarkType: TRadioGroup
@@ -229,54 +229,44 @@ object MainWindow: TMainWindow
         ShortCut = 16467
         OnClick = SaveTileAtr1Click
       end
+      object SaveBothTileAtr1: TMenuItem
+        Caption = 'Save Both TileAtr'
+        Enabled = False
+        ShortCut = 24659
+        OnClick = SaveBothTileAtr1Click
+      end
       object SaveTileAtras1: TMenuItem
         Caption = 'Save TileAtr as'
         OnClick = SaveTileAtras1Click
       end
+      object N5: TMenuItem
+        Caption = '-'
+      end
+      object Exit1: TMenuItem
+        Caption = 'Exit'
+        OnClick = Exit1Click
+      end
     end
     object Quickopen1: TMenuItem
       Caption = 'Quick open'
-      object BLOXBASE1: TMenuItem
-        Tag = 1
-        Caption = 'BLOXBASE'
-        ShortCut = 112
-        OnClick = QuickOpenClick
+      object Gamefolder1: TMenuItem
+        Caption = 'Game folder'
+        GroupIndex = 1
+        RadioItem = True
+        ShortCut = 45
+        OnClick = SelectFolderClick
       end
-      object BLOXBAT1: TMenuItem
-        Tag = 2
-        Caption = 'BLOXBAT'
-        ShortCut = 113
-        OnClick = QuickOpenClick
+      object Editorfolder1: TMenuItem
+        Caption = 'Editor folder'
+        Checked = True
+        GroupIndex = 1
+        RadioItem = True
+        ShortCut = 46
+        OnClick = SelectFolderClick
       end
-      object BLOXBGBS1: TMenuItem
-        Tag = 3
-        Caption = 'BLOXBGBS'
-        ShortCut = 114
-        OnClick = QuickOpenClick
-      end
-      object BLOXICE1: TMenuItem
-        Tag = 4
-        Caption = 'BLOXICE'
-        ShortCut = 115
-        OnClick = QuickOpenClick
-      end
-      object BLOXTREE1: TMenuItem
-        Tag = 5
-        Caption = 'BLOXTREE'
-        ShortCut = 116
-        OnClick = QuickOpenClick
-      end
-      object BLOXWAST1: TMenuItem
-        Tag = 6
-        Caption = 'BLOXWAST'
-        ShortCut = 117
-        OnClick = QuickOpenClick
-      end
-      object BLOXXMAS1: TMenuItem
-        Tag = 7
-        Caption = 'BLOXXMAS'
-        ShortCut = 118
-        OnClick = QuickOpenClick
+      object N4: TMenuItem
+        Caption = '-'
+        GroupIndex = 1
       end
     end
     object Help1: TMenuItem

@@ -5,15 +5,19 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, ComCtrls, Menus, StdCtrls, CheckLst, XPMan, Math,
-  Buttons;
+  Buttons, IniFiles, StrUtils;
 
+const program_caption = 'Dune 2000 Tileset Attributes Editor';
 const num_tiles = 800;
 const tileset_max_height = 40;
 const num_tileatr_values = 8;
 
-const num_tilesets = 7;
-const tileset_filenames: array[1..num_tilesets] of String = ('BLOXBASE','BLOXBAT','BLOXBGBS','BLOXICE','BLOXTREE','BLOXWAST','BLOXXMAS');
-const tileatr_filenames: array[1..num_tilesets] of String = ('tileatr2.bin','tileatr6.bin','tileatr3.bin','tileatr5.bin','tileatr1.bin','tileatr4.bin','tileatr7.bin');
+type
+  TTilesetInfo = record
+    name: String;
+    image_name: String;
+    tileatr_name: String;
+  end;
 
 type
   TTileAttribute = record
@@ -81,16 +85,9 @@ type
     TileAtrList: TCheckListBox;
     btnTileAtrValueApply: TButton;
     Quickopen1: TMenuItem;
-    BLOXBASE1: TMenuItem;
-    BLOXBAT1: TMenuItem;
-    BLOXBGBS1: TMenuItem;
-    BLOXICE1: TMenuItem;
-    BLOXTREE1: TMenuItem;
-    BLOXWAST1: TMenuItem;
-    BLOXXMAS1: TMenuItem;
     rgMarkSelection: TRadioGroup;
     rgOperation: TRadioGroup;
-    cbMultipleTileMode: TCheckBox;
+    cbMultipleSelectMode: TCheckBox;
     ReloadTileatr1: TMenuItem;
     N3: TMenuItem;
     SaveTileAtras1: TMenuItem;
@@ -99,6 +96,12 @@ type
     rbGameAttributes: TRadioButton;
     rbEditorAttributes: TRadioButton;
     btnImportEditorAttributes: TButton;
+    Gamefolder1: TMenuItem;
+    Editorfolder1: TMenuItem;
+    N4: TMenuItem;
+    SaveBothTileAtr1: TMenuItem;
+    N5: TMenuItem;
+    Exit1: TMenuItem;
     // Form actions
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -112,7 +115,10 @@ type
     procedure OpenBoth1Click(Sender: TObject);
     procedure ReloadTileatr1Click(Sender: TObject);
     procedure SaveTileAtr1Click(Sender: TObject);
+    procedure SaveBothTileAtr1Click(Sender: TObject);
     procedure SaveTileAtras1Click(Sender: TObject);
+    procedure Exit1Click(Sender: TObject);
+    procedure SelectFolderClick(Sender: TObject);
     procedure QuickOpenClick(Sender: TObject);
     procedure Howtouse1Click(Sender: TObject);
     procedure About1Click(Sender: TObject);
@@ -133,31 +139,40 @@ type
     { Private declarations }
     current_dir: String;
 
-    atrset: integer;
+    // Configutarion variables
+    cnt_tilesets: integer;
+    menuitems: array of TMenuItem;
+    tileset_info: array of TTilesetInfo;
+    game_folder: String;
 
-    tileset_bitmap: TBitmap;
-    tileset_loaded: boolean;
+    // Status variables
+    cur_tileset: integer;
+    atrset: integer;
+    active_tile: integer;
     tileset_top: integer;
     tileset_height: integer;
 
+    // Data variables
+    tileset_loaded: boolean;
+    tileset_bitmap: TBitmap;
     tileatr_loaded: boolean;
     tileatr_filename: string;
     tileatr_data: array[0..(num_tiles*2)-1] of cardinal;
 
-    active_tile: integer;
-
+    // Mouse and control-related variables
     mouse_old_x: integer;
     mouse_old_y: integer;
-
     select_started: boolean;
     select_start_x: integer;
     select_start_y: integer;
     select_end_x: integer;
     select_end_y: integer;
 
+    procedure init_tilesets;
     procedure open_tileset(filename: string);
-    procedure open_tileatr(filename: string);
+    procedure load_tileatr(filename: string);
     procedure save_tileatr(filename: string);
+    procedure set_no_quick_open;
     procedure render_tileset;
     procedure init_attribute_names;
     procedure set_tile_attribute_list(value: cardinal);
@@ -178,7 +193,9 @@ begin
   current_dir := ExtractFilePath(Application.ExeName);
   tileset_bitmap := TBitmap.Create;
   TilesetImage.Picture.Bitmap.Width := 640;
+  cur_tileset := -1;
   atrset := 0;
+  init_tilesets;
   init_attribute_names;
 end;
 
@@ -222,6 +239,7 @@ begin
   if OpenTilesetDialog.Execute then
   begin
     open_tileset(OpenTilesetDialog.FileName);
+    set_no_quick_open;
   end;
 end;
 
@@ -229,7 +247,8 @@ procedure TMainWindow.OpenTileAtr1Click(Sender: TObject);
 begin
   if OpenTileatrDialog.Execute then
   begin
-    open_tileatr(OpenTileatrDialog.FileName);
+    load_tileatr(OpenTileatrDialog.FileName);
+    set_no_quick_open;
   end;
 end;
 
@@ -242,7 +261,7 @@ end;
 procedure TMainWindow.ReloadTileatr1Click(Sender: TObject);
 begin
   if tileatr_loaded then
-    open_tileatr(tileatr_filename);
+    load_tileatr(tileatr_filename);
 end;
 
 procedure TMainWindow.SaveTileAtr1Click(Sender: TObject);
@@ -251,32 +270,75 @@ begin
     save_tileatr(tileatr_filename);
 end;
 
+procedure TMainWindow.SaveBothTileAtr1Click(Sender: TObject);
+var
+  i: integer;
+begin
+  // Save Editor TileAtr file
+  save_tileatr(tileatr_filename);
+  // Remove all Editor attributes and save Game TileAtr
+  for i := 0 to num_tiles - 1 do
+    tileatr_data[i] := tileatr_data[i] and atrvalueset[0];
+  save_tileatr(game_folder + 'Data\bin\' + tileset_info[cur_tileset].tileatr_name+'.BIN');
+  // Reload Editor TileAtr file
+  load_tileatr(current_dir + 'tilesets\' + tileset_info[cur_tileset].tileatr_name+'.BIN');
+end;
+
 procedure TMainWindow.SaveTileAtras1Click(Sender: TObject);
 begin
   if tileatr_loaded then
   begin
     if SaveTileAtrDialog.Execute then
+    begin
       save_tileatr(SaveTileAtrDialog.FileName);
+      set_no_quick_open;
+    end;
   end;
+end;
+
+procedure TMainWindow.Exit1Click(Sender: TObject);
+begin
+  Application.Terminate;
+end;
+
+procedure TMainWindow.SelectFolderClick(Sender: TObject);
+begin
+  (Sender as TMenuItem).Checked := true;
+  if cur_tileset <> -1 then
+    QuickOpenClick(menuitems[cur_tileset]);
 end;
 
 procedure TMainWindow.QuickOpenClick(Sender: TObject);
 var
   index: integer;
   tileset_filename: string;
+  tileatr_filename: string;
 begin
   index := (Sender as TMenuItem).Tag;
-  tileset_filename := current_dir+'tilesets\d2k_'+tileset_filenames[index]+'.bmp';
+  // Open Tileset
+  tileset_filename := current_dir+'tilesets\'+tileset_info[index].image_name+'.bmp';
   if not FileExists(tileset_filename) then
   begin
-    Application.MessageBox('Could not find tileset image. Move this program into map editor folder or copy "tilesets" folder to this program folder.','Tileset loading error', MB_ICONERROR);
+    Application.MessageBox(PChar('Could not find tileset image ('+tileset_filename+').'),'Tileset loading error', MB_ICONERROR);
     exit;
   end;
-  open_tileset(current_dir+'tilesets\d2k_'+tileset_filenames[index]+'.bmp');
-  if FileExists(current_dir+'..\data\bin\'+tileatr_filenames[index]) then
-    open_tileatr(current_dir+'..\data\bin\'+tileatr_filenames[index])
+  open_tileset(tileset_filename);
+  // Load TileAtr
+  if Gamefolder1.Checked then
+    tileatr_filename := game_folder + 'Data\bin\' + tileset_info[index].tileatr_name+'.BIN'
   else
-    open_tileatr(current_dir+'tilesets\'+tileatr_filenames[index]);
+    tileatr_filename := current_dir + 'tilesets\' + tileset_info[index].tileatr_name+'.BIN';
+  if not FileExists(tileatr_filename) then
+  begin
+    Application.MessageBox(PChar('Could not find TILEATR file ('+tileatr_filename+').'),'Tileset loading error', MB_ICONERROR);
+    exit;
+  end;
+  load_tileatr(tileatr_filename);
+  // Update GUI
+  (Sender as TMenuItem).Checked := true;
+  cur_tileset := index;
+  Caption := program_caption + ' - ' + tileset_info[index].name + ' (' + IfThen(Gamefolder1.Checked,'game','editor') + ')';
+  SaveBothTileAtr1.Enabled := Editorfolder1.Checked;
 end;
 
 procedure TMainWindow.Howtouse1Click(Sender: TObject);
@@ -306,7 +368,7 @@ begin
   end
   else if Button = mbLeft then
   begin
-    if not cbMultipleTileMode.Checked then
+    if not cbMultipleSelectMode.Checked then
       set_tile_attributes(tile_index)
     else
     begin
@@ -427,6 +489,51 @@ begin
   end;
 end;
 
+procedure TMainWindow.init_tilesets;
+var
+  ini_filename: String;
+  ini: TMemIniFile;
+  tmp_strings: TStringList;
+  i: integer;
+begin
+  // Load game folder
+  ini := TMemIniFile.Create('D2kEditor.ini');
+  game_folder := ini.ReadString('Paths','GamePath',current_dir+'..\');
+  ini.Destroy;
+  // Load list of tilesets
+  ini_filename := current_dir + 'config/tilesets.ini';
+  if not FileExists(ini_filename) then
+  begin
+    Application.MessageBox(PChar('Could not find tileset configuration file (config\tilesets.ini). Please move this program into the Map Editor folder.'),'Error', MB_ICONERROR);
+    exit;
+  end;
+  ini := TMemIniFile.Create(ini_filename);
+  tmp_strings := TStringList.Create;
+  ini.ReadSections(tmp_strings);
+  cnt_tilesets := tmp_strings.Count;
+  SetLength(tileset_info, cnt_tilesets);
+  SetLength(menuitems, cnt_tilesets);
+  for i := 0 to cnt_tilesets -1 do
+  begin
+    tileset_info[i].name := tmp_strings[i];
+    tileset_info[i].image_name := ini.ReadString(tmp_strings[i], 'image', '');
+    tileset_info[i].tileatr_name := ini.ReadString(tmp_strings[i], 'tileatr', '');
+    menuitems[i] := TMenuItem.Create(MainWindow.Quickopen1);
+    menuitems[i].Caption := tileset_info[i].name;
+    menuitems[i].RadioItem := true;
+    menuitems[i].GroupIndex := 1;
+    menuitems[i].Tag := i;
+    if i < 12 then
+      menuitems[i].ShortCut := 112 + i;
+    menuitems[i].RadioItem := true;
+    menuitems[i].GroupIndex := 2;
+    menuitems[i].OnClick := MainWindow.QuickOpenClick;
+    MainWindow.Quickopen1.Add(menuitems[i]);
+  end;
+  ini.Destroy;
+  tmp_strings.Destroy;
+end;
+
 procedure TMainWindow.open_tileset(filename: string);
 begin
   tileset_bitmap.LoadFromFile(filename);
@@ -435,7 +542,7 @@ begin
   render_tileset;
 end;
 
-procedure TMainWindow.open_tileatr(filename: string);
+procedure TMainWindow.load_tileatr(filename: string);
 var
   tileatr_file: file of cardinal;
 begin
@@ -460,6 +567,17 @@ begin
   CloseFile(tileatr_file);
   StatusBar.Panels[2].Text := filename;
   tileatr_filename := filename;
+end;
+
+procedure TMainWindow.set_no_quick_open;
+begin
+  if cur_tileset <> -1 then
+  begin
+    menuitems[cur_tileset].Checked := false;
+    Caption := program_caption;
+    SaveBothTileAtr1.Enabled := false;
+    cur_tileset := -1;
+  end;
 end;
 
 procedure TMainWindow.render_tileset;
