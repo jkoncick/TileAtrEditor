@@ -81,9 +81,9 @@ object MainWindow: TMainWindow
   end
   object TileAtrList: TCheckListBox
     Left = 680
-    Top = 68
+    Top = 62
     Width = 204
-    Height = 129
+    Height = 141
     OnClickCheck = TileAtrListClickCheck
     Color = clWhite
     Font.Charset = DEFAULT_CHARSET
@@ -136,7 +136,7 @@ object MainWindow: TMainWindow
   end
   object cbMultipleTileMode: TCheckBox
     Left = 688
-    Top = 206
+    Top = 210
     Width = 137
     Height = 17
     Caption = 'Multiple-tile-select mode'
@@ -186,7 +186,7 @@ object MainWindow: TMainWindow
   end
   object btnImportEditorAttributes: TButton
     Left = 836
-    Top = 204
+    Top = 208
     Width = 45
     Height = 21
     Hint = 'Import Editor attributes from different TileAtr file'

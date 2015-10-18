@@ -9,7 +9,7 @@ uses
 
 const num_tiles = 800;
 const tileset_max_height = 40;
-const num_tileatr_values = 7;
+const num_tileatr_values = 8;
 
 const num_tilesets = 7;
 const tileset_filenames: array[1..num_tilesets] of String = ('BLOXBASE','BLOXBAT','BLOXBGBS','BLOXICE','BLOXTREE','BLOXWAST','BLOXXMAS');
@@ -32,16 +32,18 @@ const atr: array[0..1, 0..num_tileatr_values-1] of TTileAttribute =
       (name: 'Sandworm can pass, Sand craters';       value: $10000;    combined_color: $000060; attribute_color: $FF00FF),
       (name: 'Rock (wheeled +10% speed)';             value: $20000000; combined_color: $002020; attribute_color: $00FFFF),
       (name: 'Dunes (wheeled -50%, other -20% sp.)';  value: $40000000; combined_color: $C00000; attribute_color: $FFFF00),
-      (name: 'Rough Rock (all -50% speed)';           value: $80000000; combined_color: $204000; attribute_color: $808080)
+      (name: 'Rough Rock (all -50% speed)';           value: $80000000; combined_color: $204000; attribute_color: $808080),
+      (name: '';                                      value: $00000000; combined_color: $000000; attribute_color: $000000)
     ),
     (
-      (name: 'Clean Sand';       value: $01;       combined_color: $0000E0; attribute_color: $0000FF),
-      (name: 'Clean Rock';       value: $02;       combined_color: $00C000; attribute_color: $00FF00),
-      (name: 'Clean Dunes';      value: $04;       combined_color: $C00000; attribute_color: $FF0000),
-      (name: 'Dunes area';       value: $08;       combined_color: $7F0000; attribute_color: $FF00FF),
-      (name: 'Rock area';        value: $10;       combined_color: $007F00; attribute_color: $00FFFF),
-      (name: 'Sand decorations'; value: $20;       combined_color: $00009F; attribute_color: $FFFF00),
-      (name: 'Ice Area';         value: $40;       combined_color: $C000C0; attribute_color: $808080)
+      (name: 'Paint type 1 (Clean Sand)';  value: $01; combined_color: $0000E0; attribute_color: $0000E0),
+      (name: 'Paint type 2 (Clean Rock)';  value: $02; combined_color: $00C000; attribute_color: $00C000),
+      (name: 'Paint type 3 (Clean Dunes)'; value: $04; combined_color: $C00000; attribute_color: $C00000),
+      (name: 'Paint type 4 (Clean Ice)';   value: $08; combined_color: $C000C0; attribute_color: $C000C0),
+      (name: 'Area type 1 (Sand area)';    value: $10; combined_color: $00009F; attribute_color: $7F0000),
+      (name: 'Area type 2 (Rock area)';    value: $20; combined_color: $007F00; attribute_color: $007F00),
+      (name: 'Area type 3 (Dunes area)';   value: $40; combined_color: $7F0000; attribute_color: $00009F),
+      (name: 'Area type 4 (Ice area)';     value: $80; combined_color: $7F007F; attribute_color: $7F007F)
     )
   );
 
