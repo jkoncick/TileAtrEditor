@@ -1,8 +1,8 @@
 object MainWindow: TMainWindow
-  Left = 191
-  Top = 112
+  Left = 192
+  Top = 97
   Width = 900
-  Height = 600
+  Height = 632
   Caption = 'Dune 2000 Tileset Attributes Editor'
   Color = clBtnFace
   Constraints.MaxWidth = 900
@@ -25,7 +25,7 @@ object MainWindow: TMainWindow
     Left = 8
     Top = 8
     Width = 640
-    Height = 512
+    Height = 544
     OnMouseDown = TilesetImageMouseDown
     OnMouseMove = TilesetImageMouseMove
     OnMouseUp = TilesetImageMouseUp
@@ -39,7 +39,7 @@ object MainWindow: TMainWindow
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 527
+    Top = 559
     Width = 892
     Height = 19
     Panels = <
@@ -64,7 +64,7 @@ object MainWindow: TMainWindow
     Left = 656
     Top = 8
     Width = 17
-    Height = 512
+    Height = 544
     Kind = sbVertical
     Max = 24
     PageSize = 0
@@ -107,9 +107,9 @@ object MainWindow: TMainWindow
   end
   object rgMarkSelection: TRadioGroup
     Left = 680
-    Top = 328
+    Top = 344
     Width = 201
-    Height = 121
+    Height = 141
     Caption = ' Tile-marking selection '
     ItemIndex = 0
     Items.Strings = (
@@ -117,13 +117,14 @@ object MainWindow: TMainWindow
       'Mark til&es of this type'
       '&Filter tiles having attributes'
       'Filter tiles &not having attributes'
-      'Mark &infantry-only')
+      'Mark &infantry-only'
+      'Mark &nothing')
     TabOrder = 5
     OnClick = btnTileAtrValueApplyClick
   end
   object rgOperation: TRadioGroup
     Left = 680
-    Top = 233
+    Top = 255
     Width = 201
     Height = 80
     Caption = ' Operation '
@@ -142,16 +143,16 @@ object MainWindow: TMainWindow
     Caption = 'Multiple-select mode'
     TabOrder = 7
   end
-  object rgMarkType: TRadioGroup
+  object rgViewMode: TRadioGroup
     Left = 680
-    Top = 461
+    Top = 493
     Width = 201
     Height = 60
-    Caption = ' Tile-marking style '
+    Caption = ' View mode  '
     ItemIndex = 0
     Items.Strings = (
-      'Mark tiles with single color'
-      'Mark all attributes separately')
+      'Draw tileset attributes'
+      'Check block preset coverage')
     TabOrder = 8
     OnClick = btnTileAtrValueApplyClick
   end
@@ -196,6 +197,26 @@ object MainWindow: TMainWindow
     TabOrder = 11
     Visible = False
     OnClick = btnImportEditorAttributesClick
+  end
+  object cbShowGrid: TCheckBox
+    Left = 688
+    Top = 232
+    Width = 97
+    Height = 17
+    Caption = 'Show Grid'
+    TabOrder = 12
+    OnClick = cbOptionClick
+  end
+  object cbMarkSelection: TCheckBox
+    Left = 784
+    Top = 232
+    Width = 97
+    Height = 17
+    Caption = 'Mark Selection'
+    Checked = True
+    State = cbChecked
+    TabOrder = 13
+    OnClick = cbOptionClick
   end
   object MainMenu: TMainMenu
     object File1: TMenuItem

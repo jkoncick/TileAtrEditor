@@ -11,6 +11,8 @@ const program_caption = 'Dune 2000 Tileset Attributes Editor';
 const num_tiles = 800;
 const tileset_max_height = 40;
 const num_tileatr_values = 8;
+const cnt_block_preset_groups = 8;
+const cnt_block_preset_keys = 40;
 
 type
   TTilesetInfo = record
@@ -24,43 +26,42 @@ type
     name: string;
     value: cardinal;
     combined_color: cardinal;
-    attribute_color: cardinal;
   end;
 
 const atr: array[0..1, 0..num_tileatr_values-1] of TTileAttribute =
   (
     (
-      (name: 'Vehicles can pass';                     value: $2000;     combined_color: $000080; attribute_color: $0000FF),
-      (name: 'Infantry can pass';                     value: $4000;     combined_color: $003000; attribute_color: $FF0000),
-      (name: 'Buildings can be placed, Rock craters'; value: $8000;     combined_color: $00C000; attribute_color: $00FF00),
-      (name: 'Sandworm can pass, Sand craters';       value: $10000;    combined_color: $000060; attribute_color: $FF00FF),
-      (name: 'Rock (wheeled +10% speed)';             value: $20000000; combined_color: $002020; attribute_color: $00FFFF),
-      (name: 'Dunes (wheeled -50%, other -20% sp.)';  value: $40000000; combined_color: $C00000; attribute_color: $FFFF00),
-      (name: 'Rough Rock (all -50% speed)';           value: $80000000; combined_color: $204000; attribute_color: $808080),
-      (name: '';                                      value: $00000000; combined_color: $000000; attribute_color: $000000)
+      (name: 'Vehicles can pass';                     value: $2000;     combined_color: $000080),
+      (name: 'Infantry can pass';                     value: $4000;     combined_color: $003000),
+      (name: 'Buildings can be placed, Rock craters'; value: $8000;     combined_color: $00C000),
+      (name: 'Sandworm can pass, Sand craters';       value: $10000;    combined_color: $000060),
+      (name: 'Rock (wheeled +10% speed)';             value: $20000000; combined_color: $002020),
+      (name: 'Dunes (wheeled -50%, other -20% sp.)';  value: $40000000; combined_color: $C00000),
+      (name: 'Rough Rock (all -50% speed)';           value: $80000000; combined_color: $204000),
+      (name: '';                                      value: $00000000; combined_color: $000000)
     ),
     (
-      (name: 'Paint type 1 (Clean Sand)';  value: $01; combined_color: $0000E0; attribute_color: $0000E0),
-      (name: 'Paint type 2 (Clean Rock)';  value: $02; combined_color: $00C000; attribute_color: $00C000),
-      (name: 'Paint type 3 (Clean Dunes)'; value: $04; combined_color: $C00000; attribute_color: $C00000),
-      (name: 'Paint type 4 (Clean Ice)';   value: $08; combined_color: $C000C0; attribute_color: $C000C0),
-      (name: 'Area type 1 (Sand area)';    value: $10; combined_color: $00009F; attribute_color: $7F0000),
-      (name: 'Area type 2 (Rock area)';    value: $20; combined_color: $007F00; attribute_color: $007F00),
-      (name: 'Area type 3 (Dunes area)';   value: $40; combined_color: $7F0000; attribute_color: $00009F),
-      (name: 'Area type 4 (Ice area)';     value: $80; combined_color: $7F007F; attribute_color: $7F007F)
+      (name: 'Paint type 1 (Clean Sand)';  value: $01; combined_color: $0000E0),
+      (name: 'Paint type 2 (Clean Rock)';  value: $02; combined_color: $00C000),
+      (name: 'Paint type 3 (Clean Dunes)'; value: $04; combined_color: $C00000),
+      (name: 'Paint type 4 (Clean Ice)';   value: $08; combined_color: $C000C0),
+      (name: 'Area type 1 (Sand area)';    value: $10; combined_color: $00009F),
+      (name: 'Area type 2 (Rock area)';    value: $20; combined_color: $007F00),
+      (name: 'Area type 3 (Dunes area)';   value: $40; combined_color: $7F0000),
+      (name: 'Area type 4 (Ice area)';     value: $80; combined_color: $7F007F)
     )
   );
 
 const atrvalueset: array[0..1] of cardinal = ($FFFFFF00, $000000FF);
 
 type
-   MarkSelection = (msAll, msExact, msFilterHaving, msFilterNotHaving, msInfantryOnly);
-
-type
    SetOperation = (opSet, opAdd, opRemove);
 
 type
-   MarkType = (mtSingleColor, mtAllAttributes);
+   MarkSelection = (msAll, msExact, msFilterHaving, msFilterNotHaving, msInfantryOnly, msNothing);
+
+type
+   ViewMode = (vmDrawTilesetAttributes, vmCheckBlockPresetCoverage);
 
 type
   TMainWindow = class(TForm)
@@ -92,7 +93,7 @@ type
     N3: TMenuItem;
     SaveTileAtras1: TMenuItem;
     SaveTileAtrDialog: TSaveDialog;
-    rgMarkType: TRadioGroup;
+    rgViewMode: TRadioGroup;
     rbGameAttributes: TRadioButton;
     rbEditorAttributes: TRadioButton;
     btnImportEditorAttributes: TButton;
@@ -102,6 +103,8 @@ type
     SaveBothTileAtr1: TMenuItem;
     N5: TMenuItem;
     Exit1: TMenuItem;
+    cbShowGrid: TCheckBox;
+    cbMarkSelection: TCheckBox;
     // Form actions
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -134,6 +137,7 @@ type
     procedure btnTileAtrValueApplyClick(Sender: TObject);
     procedure selectAttributeSet(Sender: TObject);
     procedure btnImportEditorAttributesClick(Sender: TObject);
+    procedure cbOptionClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -158,6 +162,7 @@ type
     tileatr_loaded: boolean;
     tileatr_filename: string;
     tileatr_data: array[0..(num_tiles*2)-1] of cardinal;
+    block_preset_coverage: array[0..num_tiles-1] of integer;
 
     // Mouse and control-related variables
     mouse_old_x: integer;
@@ -172,6 +177,7 @@ type
     procedure open_tileset(filename: string);
     procedure load_tileatr(filename: string);
     procedure save_tileatr(filename: string);
+    procedure load_tileset_configuration(filename: string);
     procedure set_no_quick_open;
     procedure render_tileset;
     procedure init_attribute_names;
@@ -239,6 +245,7 @@ begin
   if OpenTilesetDialog.Execute then
   begin
     open_tileset(OpenTilesetDialog.FileName);
+    render_tileset;
     set_no_quick_open;
   end;
 end;
@@ -248,6 +255,7 @@ begin
   if OpenTileatrDialog.Execute then
   begin
     load_tileatr(OpenTileatrDialog.FileName);
+    render_tileset;
     set_no_quick_open;
   end;
 end;
@@ -261,7 +269,10 @@ end;
 procedure TMainWindow.ReloadTileatr1Click(Sender: TObject);
 begin
   if tileatr_loaded then
+  begin
     load_tileatr(tileatr_filename);
+    render_tileset;
+  end;
 end;
 
 procedure TMainWindow.SaveTileAtr1Click(Sender: TObject);
@@ -334,6 +345,8 @@ begin
     exit;
   end;
   load_tileatr(tileatr_filename);
+  load_tileset_configuration(current_dir + 'tilesets\' + tileset_info[index].name+'.ini');
+  render_tileset;
   // Update GUI
   (Sender as TMenuItem).Checked := true;
   cur_tileset := index;
@@ -484,9 +497,14 @@ begin
     BlockRead(tileatr_file, tmp_tileatr_data, num_tiles);
     CloseFile(tileatr_file);
     for i := 0 to num_tiles - 1 do
-      tileatr_data[i] := (tileatr_data[i] and $FFFFFF00) or (tmp_tileatr_data[i] and $FF);
+      tileatr_data[i] := (tileatr_data[i] and atrvalueset[0]) or (tmp_tileatr_data[i] and atrvalueset[1]);
     render_tileset;
   end;
+end;
+
+procedure TMainWindow.cbOptionClick(Sender: TObject);
+begin
+  render_tileset;
 end;
 
 procedure TMainWindow.init_tilesets;
@@ -539,22 +557,23 @@ begin
   tileset_bitmap.LoadFromFile(filename);
   StatusBar.Panels[1].Text := filename;
   tileset_loaded := true;
-  render_tileset;
 end;
 
 procedure TMainWindow.load_tileatr(filename: string);
 var
   tileatr_file: file of cardinal;
+  i: integer;
 begin
   AssignFile(tileatr_file, filename);
   Reset(tileatr_file);
   BlockRead(tileatr_file, tileatr_data, num_tiles*2);
   CloseFile(tileatr_file);
+  for i := 0 to num_tiles - 1 do
+    block_preset_coverage[i] := 0;
   StatusBar.Panels[2].Text := filename;
   tileatr_filename := filename;
   active_tile := -1;
   tileatr_loaded := true;
-  render_tileset;
 end;
 
 procedure TMainWindow.save_tileatr(filename: string);
@@ -568,6 +587,59 @@ begin
   StatusBar.Panels[2].Text := filename;
   tileatr_filename := filename;
 end;
+
+procedure TMainWindow.load_tileset_configuration(filename: string);
+var
+  ini: TMemIniFile;
+  tmp_strings: TStringList;
+  decoder, decoder2: TStringList;
+  i, j, k, x, y: integer;
+  key: char;
+begin
+  if not FileExists(filename) then
+    exit;
+  ini := TMemIniFile.Create(filename);
+  tmp_strings := TStringList.Create;
+  decoder := TStringList.Create;
+  decoder2 := TStringList.Create;
+  decoder.Delimiter := ';';
+  decoder2.Delimiter := '.';
+  // Load block presets
+  for i := 0 to cnt_block_preset_groups - 1 do
+  begin
+    for j := 0 to cnt_block_preset_keys - 1 do
+    begin
+      key := ' ';
+      if (j >= 0) and (j <= 9) then
+        key := chr(j + ord('0'))
+      else if (j >= 10) and (j <= 35) then
+        key := chr(j + ord('A') - 10)
+      else if j = 36 then
+        key := '<'
+      else if j = 37 then
+        key := '>'
+      else if j = 38 then
+        key := ':'
+      else if j = 39 then
+        key := '?';
+      decoder.DelimitedText := ini.ReadString('Block_Preset_Group_'+(inttostr(i+1)), key, '');
+      for k := 0 to decoder.Count - 1 do
+      begin
+        decoder2.DelimitedText := decoder[k];
+        if decoder2.Count <> 4 then
+          continue;
+        for x := strtoint(decoder2[2]) to strtoint(decoder2[2]) + strtoint(decoder2[0]) - 1 do
+          for y := strtoint(decoder2[3]) to strtoint(decoder2[3]) + strtoint(decoder2[1]) - 1 do
+            inc(block_preset_coverage[x + y * 20]);
+      end;
+    end;
+  end;
+  ini.Destroy;
+  tmp_strings.Destroy;
+  decoder.Destroy;
+  decoder2.Destroy;
+end;
+
 
 procedure TMainWindow.set_no_quick_open;
 begin
@@ -588,7 +660,7 @@ var
   tile_index: integer;
   tile_value: cardinal;
   mark_selection: MarkSelection;
-  mark_type: MarkType;
+  view_mode: ViewMode;
   mark_tile: boolean;
   selected_value: cardinal;
   color: cardinal;
@@ -596,12 +668,29 @@ var
 begin
   top_pixels := tileset_top * 32;
   selected_value := strtoint('$'+TileAtrValue.Text) and atrvalueset[atrset];
-  if tileset_loaded then
-    TilesetImage.Canvas.CopyRect(Rect(0,0,640,tileset_height*32), tileset_bitmap.Canvas, Rect(0,top_pixels,640,top_pixels+tileset_height*32));
   if tileatr_loaded then
   begin
+    // Draw tileset
+    TilesetImage.Canvas.CopyRect(Rect(0,0,640,tileset_height*32), tileset_bitmap.Canvas, Rect(0,top_pixels,640,top_pixels+tileset_height*32));
+    // Draw grid
+    if cbShowGrid.Checked then
+    begin
+      TilesetImage.Canvas.Pen.Color:= clBlack;
+      TilesetImage.Canvas.Pen.Width := 1;
+      for x:= 0 to 20-1 do
+      begin
+        TilesetImage.Canvas.MoveTo(x*32,0);
+        TilesetImage.Canvas.LineTo(x*32,tileset_height*32);
+      end;
+      for y:= 0 to tileset_height-1 do
+      begin
+        TilesetImage.Canvas.MoveTo(0,y*32);
+        TilesetImage.Canvas.LineTo(640,y*32);
+      end;
+    end;
+    // Draw attributes
     mark_selection := MarkSelection(rgMarkSelection.ItemIndex);
-    mark_type := MarkType(rgMarkType.ItemIndex);
+    view_mode := ViewMode(rgViewMode.ItemIndex);
     TilesetImage.Canvas.Brush.Style := bsClear;
     TilesetImage.Canvas.Pen.Width := 2;
     for y := 0 to tileset_height - 1 do
@@ -609,17 +698,18 @@ begin
       begin
         tile_index := x + (y + tileset_top) * 20;
         tile_value := tileatr_data[tile_index] and atrvalueset[atrset];
-        mark_tile := false;
-        case mark_selection of
-          msAll:              mark_tile := true;
-          msExact:            mark_tile := tile_value = selected_value;
-          msFilterHaving:     mark_tile := (tile_value and selected_value) = selected_value;
-          msFilterNotHaving:  mark_tile := (tile_value and selected_value) = 0;
-          msInfantryOnly:     mark_tile := (tile_value and $00006000) = $00004000;
-          end;
-        if mark_tile then
+        if view_mode = vmDrawTilesetAttributes then
         begin
-          if mark_type = mtSingleColor then
+          mark_tile := false;
+          case mark_selection of
+            msAll:              mark_tile := true;
+            msExact:            mark_tile := tile_value = selected_value;
+            msFilterHaving:     mark_tile := (tile_value and selected_value) = selected_value;
+            msFilterNotHaving:  mark_tile := (tile_value and selected_value) = 0;
+            msInfantryOnly:     mark_tile := (tile_value and $00006000) = $00004000;
+            msNothing:          mark_tile := false;
+            end;
+          if mark_tile then
           begin
             color := $0;
             for i := 0 to num_tileatr_values - 1 do
@@ -627,21 +717,24 @@ begin
                 color := color or atr[atrset,i].combined_color;
             TilesetImage.Canvas.Pen.Color := color;
             TilesetImage.Canvas.Rectangle(x*32+2, y*32+2, x*32+31, y*32+31);
-          end
-          else if mark_type = mtAllAttributes then
+          end;
+        end else
+        if view_mode = vmCheckBlockPresetCoverage then
+        begin
+          if (block_preset_coverage[tile_index] > 0) or ((tileatr_data[tile_index] and $f) <> 0) then
           begin
-            TilesetImage.Canvas.Brush.Style := bsSolid;
-            TilesetImage.Canvas.Pen.Width := 1;
-            for i := 0 to num_tileatr_values - 1 do
-              if (tileatr_data[tile_index] and atr[atrset,i].value) <> 0 then
-              begin
-                TilesetImage.Canvas.Pen.Color := atr[atrset,i].attribute_color;
-                TilesetImage.Canvas.Brush.Color := atr[atrset,i].attribute_color;
-                TilesetImage.Canvas.Rectangle(x*32+2+i*4, y*32+26, x*32+6+i*4, y*32+30);
-              end;
+            color := $000000;
+            if block_preset_coverage[tile_index] = 0 then
+              color := $00D0D0
+            else if block_preset_coverage[tile_index] = 1 then
+              color := $00A000
+            else if block_preset_coverage[tile_index] > 1 then
+              color := $0000D0;
+            TilesetImage.Canvas.Pen.Color := color;
+            TilesetImage.Canvas.Rectangle(x*32+2, y*32+2, x*32+31, y*32+31);
           end;
         end;
-        if active_tile = tile_index then
+        if (active_tile = tile_index) and cbMarkSelection.Checked then
         begin
           TilesetImage.Canvas.Brush.Style := bsClear;
           TilesetImage.Canvas.Pen.Width := 2;
@@ -649,6 +742,7 @@ begin
           TilesetImage.Canvas.Rectangle(x*32+1, y*32+1, x*32+32, y*32+32);
         end;
       end;
+    // Draw selection
     if select_started then
     begin
       TilesetImage.Canvas.Brush.Style := bsClear;
