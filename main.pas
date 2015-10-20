@@ -88,7 +88,7 @@ type
     OpenTilesetDialog: TOpenDialog;
     OpenTileAtrDialog: TOpenDialog;
     Help1: TMenuItem;
-    Howtouse1: TMenuItem;
+    MouseActions1: TMenuItem;
     N2: TMenuItem;
     About1: TMenuItem;
     TileAtrList: TCheckListBox;
@@ -117,9 +117,13 @@ type
     Undo1: TMenuItem;
     Redo1: TMenuItem;
     btnClearAttributes: TButton;
+    KeyShortcuts1: TMenuItem;
     // Form actions
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure CMDialogKey(var AMessage: TCMDialogKey); message CM_DIALOGKEY;
     procedure FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
       MousePos: TPoint; var Handled: Boolean);
     procedure FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
@@ -137,7 +141,8 @@ type
     procedure QuickOpenClick(Sender: TObject);
     procedure Undo1Click(Sender: TObject);
     procedure Redo1Click(Sender: TObject);
-    procedure Howtouse1Click(Sender: TObject);
+    procedure KeyShortcuts1Click(Sender: TObject);
+    procedure MouseActions1Click(Sender: TObject);
     procedure About1Click(Sender: TObject);
     // Controls actions
     procedure TilesetImageMouseDown(Sender: TObject; Button: TMouseButton;
@@ -249,6 +254,41 @@ begin
   else
     TilesetScrollBar.Enabled := True;
   render_tileset;
+end;
+
+procedure TMainWindow.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if ssCtrl in Shift then
+  begin
+    case key of
+      ord('G'): cbShowGrid.Checked := not cbShowGrid.Checked;
+      ord('M'): cbMarkSelection.Checked := not cbMarkSelection.Checked;
+    end;
+  end else
+  if ActiveControl <> TileAtrValue then
+  begin
+    case key of
+      ord('S'): rgOperation.ItemIndex := 0;
+      ord('A'): rgOperation.ItemIndex := 1;
+      ord('R'): rgOperation.ItemIndex := 2;
+      ord('M'): cbMultipleSelectMode.Checked := not cbMultipleSelectMode.Checked;
+      ord('C'): btnClearAttributesClick(nil);
+    end;
+  end;
+end;
+
+procedure TMainWindow.CMDialogKey(var AMessage: TCMDialogKey);
+begin
+  if AMessage.CharCode = VK_TAB then
+  begin
+    if rbGameAttributes.Checked then
+      rbEditorAttributes.Checked := true
+    else
+      rbGameAttributes.Checked := true;
+    AMessage.Result := 1;
+  end else
+    inherited;
 end;
 
 procedure TMainWindow.FormMouseWheelDown(Sender: TObject;
@@ -391,14 +431,20 @@ begin
   render_tileset;
 end;
 
-procedure TMainWindow.Howtouse1Click(Sender: TObject);
+procedure TMainWindow.KeyShortcuts1Click(Sender: TObject);
+begin
+  ShowMessage('Key shortcuts:'#13#13'Tab = Toggle Game/Editor attributes'#13'Ctrl + G = Show Grid'#13'Ctrl + M = Mark Selection'#13 +
+              'S = Set attributes'#13'A = Add selected attributes'#13'R = Remove selected attributes'#13'C = Clear selected attributes'#13'M = Multiple-select mode');
+end;
+
+procedure TMainWindow.MouseActions1Click(Sender: TObject);
 begin
   ShowMessage('Mouse actions:'#13#13'Left click = Set tileset attributes'#13'Right click = Get tileset attributes'#13'Middle click = Unmark selected tile'#13'Use "Multiple-tile-select mode" and'#13'drag over all tiles you want to modify.');
 end;
 
 procedure TMainWindow.About1Click(Sender: TObject);
 begin
-  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2K+ Editing tools'#13#13'Made by Klofkac'#13'Version 1.0'#13'Date: 2015-07-27'#13#13'http://github.com/jkoncick/TileAtrEditor');
+  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2K+ Editing tools'#13#13'Made by Klofkac'#13'Version 1.1'#13'Date: 2015-10-21'#13#13'http://github.com/jkoncick/TileAtrEditor');
 end;
 
 procedure TMainWindow.TilesetImageMouseDown(Sender: TObject;
@@ -491,7 +537,7 @@ var
   value: cardinal;
 begin
   value := 0;
-  for i := 0 to num_tileatr_values - 1 do
+  for i := 0 to TileAtrList.Count - 1 do
   begin
     if TileAtrList.Checked[i] then
       value := value or atr[atrset,i].value;
@@ -544,7 +590,7 @@ procedure TMainWindow.btnClearAttributesClick(Sender: TObject);
 var
   i: integer;
 begin
-  for i := 0 to num_tileatr_values - 1 do
+  for i := 0 to TileAtrList.Count - 1 do
   begin
     TileAtrList.Checked[i] := false;
   end;
@@ -813,7 +859,8 @@ var
 begin
   TileAtrList.Items.Clear;
   for i := 0 to num_tileatr_values - 1 do
-     TileAtrList.Items.add(atr[atrset,i].name)
+    if atr[atrset,i].name <> '' then
+      TileAtrList.Items.add(atr[atrset,i].name)
 end;
 
 procedure TMainWindow.do_undo;
@@ -863,7 +910,7 @@ procedure TMainWindow.set_tile_attribute_list(value: cardinal);
 var
   i: integer;
 begin
-  for i := 0 to num_tileatr_values - 1 do
+  for i := 0 to TileAtrList.Count - 1 do
   begin
     if (value and atr[atrset,i].value) <> 0 then
       TileAtrList.Checked[i] := true

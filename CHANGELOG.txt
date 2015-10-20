@@ -1,0 +1,41 @@
+TileAtrEditor changelog
+
+Version 1.1 (released 2015-10-21)
+---------------------------------
+Added: Improved "Quick open" option: you can now choose to open TILEATR files either from the
+       editor folder or the game folder. Added support for custom tilesets - D2kEditor's tileset 
+       configuration file (config/tilesets.ini) is loaded.
+Added: "Save Both TileAtr" option - this saves the TILEATR file into editor folder and game folder
+       and clears Editor attributes in the game version. Works only when a tileset is opened from
+       the "Quick open" menu from the editor folder.
+Added: "Check block preset coverage" option: useful when setting up block presets for a tileset.
+       It reads the tileset's ini file and shows which tiles are included in block presets.
+Added: Undo&Redo feature
+Added: Show Grid, Mark Selection, Clear selected attributes option
+Added: Some key shortcuts
+Changed: New program icon
+Changed: Renamed Editor attributes according to changes in D2kEditor v1.1
+Removed: "Mark all attributes separately" option
+
+
+Version 1.0 (released 2015-07-27)
+---------------------------------
+Changed: Some attributes were renamed (including the unknown ones) to tell more exactly 
+         what they are doing
+Added: Support for "Editor Attributes"
+Added: Improved GUI layout a bit, F1-F7 shortcuts for quick-open tileset
+Added: Tile index is shown on status bar
+
+
+Version 0.1 (released 2015-05-08)
+---------------------------------
+Initial version
+- Open both tileset image and TILEATRx.BIN file 
+- "Quick open" option
+- All tiles are marked with color which is made of combination of attributes they have
+- Filter tiles by their attributes in several ways
+- Copy attributes from a tile 
+- Set attributes to single tile or multiple tiles at once 
+- Add or remove attributes
+- Reopen and save Tileatr file
+- Support for 7 known attributes (and actually used by game)

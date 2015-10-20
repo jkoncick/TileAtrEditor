@@ -13,10 +13,12 @@ object MainWindow: TMainWindow
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  KeyPreview = True
   Menu = MainMenu
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   OnMouseWheelDown = FormMouseWheelDown
   OnMouseWheelUp = FormMouseWheelUp
   OnResize = FormResize
@@ -57,7 +59,7 @@ object MainWindow: TMainWindow
         Width = 360
       end
       item
-        Text = 'v1.0'
+        Text = 'v1.1'
         Width = 20
       end>
   end
@@ -77,8 +79,9 @@ object MainWindow: TMainWindow
     Top = 8
     Width = 73
     Height = 21
+    MaxLength = 8
     TabOrder = 2
-    Text = '0'
+    Text = '00000000'
   end
   object TileAtrList: TCheckListBox
     Left = 680
@@ -114,12 +117,12 @@ object MainWindow: TMainWindow
     Caption = ' Tile-marking selection '
     ItemIndex = 0
     Items.Strings = (
-      'Mark &all tiles'
-      'Mark til&es of this type'
-      '&Filter tiles having attributes'
-      'Filter tiles &not having attributes'
-      'Mark &infantry-only'
-      'Mark &nothing')
+      'Mark all tiles'
+      'Mark tiles of this type'
+      'Filter tiles having attributes'
+      'Filter tiles not having attributes'
+      'Mark infantry-only'
+      'Mark nothing')
     TabOrder = 5
     OnClick = btnTileAtrValueApplyClick
   end
@@ -320,15 +323,19 @@ object MainWindow: TMainWindow
     end
     object Help1: TMenuItem
       Caption = 'Help'
-      object Howtouse1: TMenuItem
-        Caption = 'How to use'
-        OnClick = Howtouse1Click
+      object KeyShortcuts1: TMenuItem
+        Caption = 'Key Shortcuts'
+        OnClick = KeyShortcuts1Click
+      end
+      object MouseActions1: TMenuItem
+        Caption = 'Mouse Actions'
+        OnClick = MouseActions1Click
       end
       object N2: TMenuItem
         Caption = '-'
       end
       object About1: TMenuItem
-        Caption = 'About'
+        Caption = 'About...'
         OnClick = About1Click
       end
     end
