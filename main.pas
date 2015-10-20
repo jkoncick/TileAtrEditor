@@ -13,12 +13,20 @@ const tileset_max_height = 40;
 const num_tileatr_values = 8;
 const cnt_block_preset_groups = 8;
 const cnt_block_preset_keys = 40;
+const max_undo_steps = 4095;
 
 type
   TTilesetInfo = record
     name: String;
     image_name: String;
     tileatr_name: String;
+  end;
+
+type
+  TUndoEntry = record
+    index: integer;
+    data: cardinal;
+    is_first: boolean;
   end;
 
 type
@@ -105,6 +113,10 @@ type
     Exit1: TMenuItem;
     cbShowGrid: TCheckBox;
     cbMarkSelection: TCheckBox;
+    Edit1: TMenuItem;
+    Undo1: TMenuItem;
+    Redo1: TMenuItem;
+    btnClearAttributes: TButton;
     // Form actions
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -123,6 +135,8 @@ type
     procedure Exit1Click(Sender: TObject);
     procedure SelectFolderClick(Sender: TObject);
     procedure QuickOpenClick(Sender: TObject);
+    procedure Undo1Click(Sender: TObject);
+    procedure Redo1Click(Sender: TObject);
     procedure Howtouse1Click(Sender: TObject);
     procedure About1Click(Sender: TObject);
     // Controls actions
@@ -137,6 +151,7 @@ type
     procedure btnTileAtrValueApplyClick(Sender: TObject);
     procedure selectAttributeSet(Sender: TObject);
     procedure btnImportEditorAttributesClick(Sender: TObject);
+    procedure btnClearAttributesClick(Sender: TObject);
     procedure cbOptionClick(Sender: TObject);
 
   private
@@ -164,6 +179,13 @@ type
     tileatr_data: array[0..(num_tiles*2)-1] of cardinal;
     block_preset_coverage: array[0..num_tiles-1] of integer;
 
+    // Undo variables
+    undo_history: array[0..max_undo_steps] of TUndoEntry;
+    undo_start: integer;
+    undo_max: integer;
+    undo_pos: integer;
+    undo_block_start: boolean;
+
     // Mouse and control-related variables
     mouse_old_x: integer;
     mouse_old_y: integer;
@@ -181,8 +203,11 @@ type
     procedure set_no_quick_open;
     procedure render_tileset;
     procedure init_attribute_names;
+    procedure do_undo;
+    procedure do_redo;
+    procedure reset_undo_history;
     procedure set_tile_attribute_list(value: cardinal);
-    procedure set_tile_attributes(tile_index: integer);
+    procedure set_tile_attributes(tile_index: integer; single_op: boolean);
   public
     { Public declarations }
   end;
@@ -354,6 +379,18 @@ begin
   SaveBothTileAtr1.Enabled := Editorfolder1.Checked;
 end;
 
+procedure TMainWindow.Undo1Click(Sender: TObject);
+begin
+  do_undo;
+  render_tileset;
+end;
+
+procedure TMainWindow.Redo1Click(Sender: TObject);
+begin
+  do_redo;
+  render_tileset;
+end;
+
 procedure TMainWindow.Howtouse1Click(Sender: TObject);
 begin
   ShowMessage('Mouse actions:'#13#13'Left click = Set tileset attributes'#13'Right click = Get tileset attributes'#13'Middle click = Unmark selected tile'#13'Use "Multiple-tile-select mode" and'#13'drag over all tiles you want to modify.');
@@ -382,7 +419,7 @@ begin
   else if Button = mbLeft then
   begin
     if not cbMultipleSelectMode.Checked then
-      set_tile_attributes(tile_index)
+      set_tile_attributes(tile_index, true)
     else
     begin
       select_started := true;
@@ -430,13 +467,14 @@ begin
   if select_started then
   begin
     select_started := false;
+    undo_block_start := true;
     min_x := min(select_start_x, select_end_x);
     max_x := max(select_start_x, select_end_x);
     min_y := min(select_start_y, select_end_y);
     max_y := max(select_start_y, select_end_y);
     for yy := min_y to max_y do
       for xx:= min_x to max_x do
-        set_tile_attributes(xx + yy*20);
+        set_tile_attributes(xx + yy*20, false);
     render_tileset;
   end;
 end;
@@ -500,6 +538,17 @@ begin
       tileatr_data[i] := (tileatr_data[i] and atrvalueset[0]) or (tmp_tileatr_data[i] and atrvalueset[1]);
     render_tileset;
   end;
+end;
+
+procedure TMainWindow.btnClearAttributesClick(Sender: TObject);
+var
+  i: integer;
+begin
+  for i := 0 to num_tileatr_values - 1 do
+  begin
+    TileAtrList.Checked[i] := false;
+  end;
+  TileAtrListClickCheck(nil);
 end;
 
 procedure TMainWindow.cbOptionClick(Sender: TObject);
@@ -573,6 +622,7 @@ begin
   StatusBar.Panels[2].Text := filename;
   tileatr_filename := filename;
   active_tile := -1;
+  reset_undo_history;
   tileatr_loaded := true;
 end;
 
@@ -766,6 +816,49 @@ begin
      TileAtrList.Items.add(atr[atrset,i].name)
 end;
 
+procedure TMainWindow.do_undo;
+var
+  tmp_data: cardinal;
+begin
+  if undo_pos = undo_start then
+    exit;
+  repeat
+    undo_pos := (undo_pos - 1) and max_undo_steps;
+    tmp_data := tileatr_data[undo_history[undo_pos].index];
+    tileatr_data[undo_history[undo_pos].index] := undo_history[undo_pos].data;
+    undo_history[undo_pos].data := tmp_data;
+  until undo_history[undo_pos].is_first or (undo_pos = undo_start);
+  if undo_pos = undo_start then
+    Undo1.Enabled := false;
+  Redo1.Enabled := true;
+end;
+
+procedure TMainWindow.do_redo;
+var
+  tmp_data: cardinal;
+begin
+  if undo_pos = undo_max then
+    exit;
+  repeat
+    tmp_data := tileatr_data[undo_history[undo_pos].index];
+    tileatr_data[undo_history[undo_pos].index] := undo_history[undo_pos].data;
+    undo_history[undo_pos].data := tmp_data;
+    undo_pos := (undo_pos + 1) and max_undo_steps;
+  until undo_history[undo_pos].is_first or (undo_pos = undo_max);
+  if undo_pos = undo_max then
+    Redo1.Enabled := false;
+  Undo1.Enabled := true;
+end;
+
+procedure TMainWindow.reset_undo_history;
+begin
+  Undo1.Enabled := false;
+  Redo1.Enabled := false;
+  undo_start := 0;
+  undo_max := 0;
+  undo_pos := 0;
+end;
+
 procedure TMainWindow.set_tile_attribute_list(value: cardinal);
 var
   i: integer;
@@ -779,18 +872,34 @@ begin
   end;
 end;
 
-procedure TMainWindow.set_tile_attributes(tile_index: integer);
+procedure TMainWindow.set_tile_attributes(tile_index: integer; single_op: boolean);
 var
   selected_value: cardinal;
+  tileatr_value: cardinal;
   operation: SetOperation;
 begin
   selected_value := strtoint('$'+TileAtrValue.Text);
+  tileatr_value := 0;
   operation := SetOperation(rgOperation.ItemIndex);
+  // Get the target tileatr value according to the operation
   case operation of
-    opSet:    tileatr_data[tile_index] := (tileatr_data[tile_index] and (not atrvalueset[atrset])) or (selected_value and atrvalueset[atrset]);
-    opAdd:    tileatr_data[tile_index] := tileatr_data[tile_index] or selected_value;
-    opRemove: tileatr_data[tile_index] := tileatr_data[tile_index] and (not selected_value);
+    opSet:    tileatr_value := (tileatr_data[tile_index] and (not atrvalueset[atrset])) or (selected_value and atrvalueset[atrset]);
+    opAdd:    tileatr_value := tileatr_data[tile_index] or selected_value;
+    opRemove: tileatr_value := tileatr_data[tile_index] and (not selected_value);
     end;
+  // Save old tileatr value into undo history
+  undo_history[undo_pos].index := tile_index;
+  undo_history[undo_pos].data := tileatr_data[tile_index];
+  undo_history[undo_pos].is_first := single_op or undo_block_start;
+  undo_block_start := false;
+  undo_pos := (undo_pos + 1) and max_undo_steps;
+  if undo_start = undo_pos then
+    undo_start := (undo_start + 1) and max_undo_steps;
+  undo_max := undo_pos;
+  Undo1.Enabled := true;
+  Redo1.Enabled := false;
+  // Save new tileatr value
+  tileatr_data[tile_index] := tileatr_value;
 end;
 
 end.

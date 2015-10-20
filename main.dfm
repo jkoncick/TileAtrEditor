@@ -2,11 +2,11 @@ object MainWindow: TMainWindow
   Left = 192
   Top = 97
   Width = 900
-  Height = 632
+  Height = 640
   Caption = 'Dune 2000 Tileset Attributes Editor'
   Color = clBtnFace
   Constraints.MaxWidth = 900
-  Constraints.MinHeight = 600
+  Constraints.MinHeight = 640
   Constraints.MinWidth = 900
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,6 +15,7 @@ object MainWindow: TMainWindow
   Font.Style = []
   Menu = MainMenu
   OldCreateOrder = False
+  Position = poScreenCenter
   OnCreate = FormCreate
   OnMouseWheelDown = FormMouseWheelDown
   OnMouseWheelUp = FormMouseWheelUp
@@ -39,7 +40,7 @@ object MainWindow: TMainWindow
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 559
+    Top = 567
     Width = 892
     Height = 19
     Panels = <
@@ -136,9 +137,9 @@ object MainWindow: TMainWindow
     TabOrder = 6
   end
   object cbMultipleSelectMode: TCheckBox
-    Left = 688
+    Left = 684
     Top = 210
-    Width = 137
+    Width = 121
     Height = 17
     Caption = 'Multiple-select mode'
     TabOrder = 7
@@ -186,7 +187,7 @@ object MainWindow: TMainWindow
     OnClick = selectAttributeSet
   end
   object btnImportEditorAttributes: TButton
-    Left = 836
+    Left = 804
     Top = 208
     Width = 45
     Height = 21
@@ -199,7 +200,7 @@ object MainWindow: TMainWindow
     OnClick = btnImportEditorAttributesClick
   end
   object cbShowGrid: TCheckBox
-    Left = 688
+    Left = 684
     Top = 232
     Width = 97
     Height = 17
@@ -217,6 +218,18 @@ object MainWindow: TMainWindow
     State = cbChecked
     TabOrder = 13
     OnClick = cbOptionClick
+  end
+  object btnClearAttributes: TButton
+    Left = 852
+    Top = 208
+    Width = 29
+    Height = 21
+    Hint = 'Clear selected attributes'
+    Caption = 'Clr'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 14
+    OnClick = btnClearAttributesClick
   end
   object MainMenu: TMainMenu
     object File1: TMenuItem
@@ -288,6 +301,21 @@ object MainWindow: TMainWindow
       object N4: TMenuItem
         Caption = '-'
         GroupIndex = 1
+      end
+    end
+    object Edit1: TMenuItem
+      Caption = 'Edit'
+      object Undo1: TMenuItem
+        Caption = 'Undo'
+        Enabled = False
+        ShortCut = 16474
+        OnClick = Undo1Click
+      end
+      object Redo1: TMenuItem
+        Caption = 'Redo'
+        Enabled = False
+        ShortCut = 16473
+        OnClick = Redo1Click
       end
     end
     object Help1: TMenuItem
