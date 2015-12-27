@@ -59,7 +59,7 @@ object MainWindow: TMainWindow
         Width = 360
       end
       item
-        Text = 'v1.1'
+        Text = 'v1.2'
         Width = 20
       end>
   end

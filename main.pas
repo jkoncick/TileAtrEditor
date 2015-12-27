@@ -13,6 +13,8 @@ const tileset_max_height = 40;
 const num_tileatr_values = 8;
 const cnt_block_preset_groups = 8;
 const cnt_block_preset_keys = 40;
+const max_custom_block_size = 8;
+const max_custom_blocks = 40;
 const max_undo_steps = 4095;
 
 type
@@ -444,7 +446,7 @@ end;
 
 procedure TMainWindow.About1Click(Sender: TObject);
 begin
-  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2K+ Editing tools'#13#13'Made by Klofkac'#13'Version 1.1'#13'Date: 2015-10-21'#13#13'http://github.com/jkoncick/TileAtrEditor');
+  ShowMessage('Dune 2000 Tileset Attributes Editor'#13#13'Part of D2K+ Editing tools'#13#13'Made by Klofkac'#13'Version 1.2'#13'Date: 2015-12-27'#13#13'http://github.com/jkoncick/TileAtrEditor');
 end;
 
 procedure TMainWindow.TilesetImageMouseDown(Sender: TObject;
@@ -691,6 +693,7 @@ var
   decoder, decoder2: TStringList;
   i, j, k, x, y: integer;
   key: char;
+  index, width, height: integer;
 begin
   if not FileExists(filename) then
     exit;
@@ -729,6 +732,23 @@ begin
             inc(block_preset_coverage[x + y * 20]);
       end;
     end;
+  end;
+  // Load custom blocks
+  ini.ReadSection('Custom_Blocks', tmp_strings);
+  for i := 0 to tmp_strings.Count - 1 do
+  begin
+    index := strtoint(tmp_strings[i]) - 1;
+    if (index >= max_custom_blocks) or (index < 0) then
+      continue;
+    decoder2.DelimitedText := ini.ReadString('Custom_Blocks', tmp_strings[i], '');
+    if decoder2.Count < 2 then
+      continue;
+    width := strtoint(decoder2[0]);
+    height := strtoint(decoder2[1]);
+    if (width > max_custom_block_size) or (height > max_custom_block_size) then
+      continue;
+    for j := 2 to decoder2.Count - 1 do
+      inc(block_preset_coverage[strtoint(decoder2[j])]);
   end;
   ini.Destroy;
   tmp_strings.Destroy;

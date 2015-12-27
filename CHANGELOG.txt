@@ -1,5 +1,10 @@
 TileAtrEditor changelog
 
+Version 1.2 (released 2015-12-27)
+---------------------------------
+Added: Custom blocks (added in D2kEditor v1.2) are included in "Check block preset coverage" mode
+
+
 Version 1.1 (released 2015-10-21)
 ---------------------------------
 Added: Improved "Quick open" option: you can now choose to open TILEATR files either from the
